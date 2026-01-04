@@ -1,153 +1,259 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-	<meta charset="UTF-8">
-	<meta name="viewport" content="width=device-width, initial-scale=1.0">
-	<title>时间戳转换 | 工具集</title>
-	<script src="https://cdn.tailwindcss.com"></script>
-	<script>
-		tailwind.config = {
-			theme: {
-				extend: {
-					colors: {
-						primary: '#3b82f6',
-						secondary: '#64748b',
-					},
-				}
-			}
-		}
-	</script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>时间戳转换 | 工具集</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3b82f6',
+                        secondary: '#64748b',
+                    },
+                }
+            }
+        }
+    </script>
+    <style>
+        /* 适配iPad Safari datetime-local宽度问题 */
+        input[type="datetime-local"] {
+            width: 100%;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+        /* Toast提示样式 */
+        .toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            z-index: 9999;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+    </style>
 </head>
 <body class="bg-gray-50 font-sans">
-	<!-- 导航栏 -->
-	<nav class="bg-white shadow-sm fixed w-full top-0 z-10">
-		<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-			<div class="flex justify-between h-16">
-				<div class="flex items-center">
-					<a href="index.html" class="text-primary font-medium text-lg">工具集</a>
-					<div class="ml-6 space-x-4">
-						<a href="index.html" class="text-primary px-3 py-2 rounded-md font-medium">时间戳转换</a>
-						<a href="urlencode.html" class="text-gray-600 hover:text-primary px-3 py-2 rounded-md font-medium transition">URL编解码</a>
-						<a href="base64.html" class="text-gray-600 hover:text-primary px-3 py-2 rounded-md font-medium transition">Base64加解密</a>
-					</div>
-				</div>
-			</div>
-		</div>
-	</nav>
+    <!-- 导航栏（响应式） -->
+    <nav class="bg-white shadow-sm fixed w-full top-0 z-10">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- 左侧logo -->
+                <div class="flex items-center">
+                    <a href="index.html" class="text-primary font-medium text-lg">工具集</a>
+                </div>
+                
+                <!-- 桌面端导航 -->
+                <div class="hidden sm:flex items-center space-x-4">
+                    <a href="index.html" class="text-primary px-3 py-2 rounded-md font-medium">时间戳转换</a>
+                    <a href="urlencode.html" class="text-gray-600 hover:text-primary px-3 py-2 rounded-md font-medium transition">URL编解码</a>
+                    <a href="base64.html" class="text-gray-600 hover:text-primary px-3 py-2 rounded-md font-medium transition">Base64加解密</a>
+                </div>
+                
+                <!-- 移动端汉堡按钮 -->
+                <div class="sm:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-500 hover:text-primary">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 移动端下拉菜单 -->
+        <div id="mobile-menu" class="sm:hidden hidden bg-white shadow-lg absolute w-full">
+            <div class="px-2 pt-2 pb-3 space-y-1">
+                <a href="index.html" class="block px-3 py-2 rounded-md text-base font-medium text-primary bg-primary/5">时间戳转换</a>
+                <a href="urlencode.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 transition">URL编解码</a>
+                <a href="base64.html" class="block px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-primary hover:bg-gray-50 transition">Base64加解密</a>
+            </div>
+        </div>
+    </nav>
 
-	<!-- 主内容 -->
-	<main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-		<div class="bg-white rounded-lg shadow-md p-6">
-			<h1 class="text-2xl font-bold text-gray-800 mb-6">时间戳转换（北京时间）</h1>
-			
-			<div class="space-y-4">
-				<!-- 时间戳转日期 -->
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">时间戳（秒/毫秒）</label>
-					<input type="text" id="timestamp-input" placeholder="例如：1735689600 或 1735689600000" 
-						   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
-				</div>
-				
-				<!-- 日期转时间戳 -->
-				<div>
-					<label class="block text-sm font-medium text-gray-700 mb-1">日期时间</label>
-					<input type="datetime-local" id="datetime-input" 
-						   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
-				</div>
-				
-				<!-- 按钮区域 -->
-				<div class="flex space-x-3 pt-2">
-					<button id="convert-timestamp" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition">转换</button>
-					<button id="clear-all" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">清空</button>
-				</div>
-				
-				<!-- 结果区域 -->
-				<div class="pt-4">
-					<label class="block text-sm font-medium text-gray-700 mb-1">转换结果</label>
-					<div id="result" class="w-full min-h-[60px] px-3 py-2 border border-gray-300 rounded-md bg-gray-50 whitespace-pre-wrap"></div>
-				</div>
-			</div>
-		</div>
-	</main>
+    <!-- Toast提示 -->
+    <div id="toast" class="toast">复制成功</div>
 
-	<script>
-		// 时间戳转北京时间
-		function timestampToDatetime(timestamp) {
-			// 处理毫秒/秒
-			if (timestamp.toString().length === 10) {
-				timestamp = timestamp * 1000;
-			}
-			
-			const date = new Date(timestamp);
-			// 格式化北京时间
-			return date.toLocaleString('zh-CN', {
-				timeZone: 'Asia/Shanghai',
-				year: 'numeric',
-				month: '2-digit',
-				day: '2-digit',
-				hour: '2-digit',
-				minute: '2-digit',
-				second: '2-digit',
-				hour12: false
-			}).replace(/\//g, '-');
-		}
+    <!-- 主内容 -->
+    <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h1 class="text-2xl font-bold text-gray-800 mb-6">时间戳转换（北京时间）</h1>
+            
+            <div class="space-y-4">
+                <!-- 时间戳转日期 -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">时间戳（秒/毫秒）</label>
+                    <input type="text" id="timestamp-input" placeholder="例如：1735689600 或 1735689600000" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                </div>
+                
+                <!-- 日期转时间戳（精确到秒） -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">日期时间（精确到秒）</label>
+                    <input type="datetime-local" id="datetime-input" step="1" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                </div>
+                
+                <!-- 按钮区域 -->
+                <div class="flex space-x-3 pt-2">
+                    <button id="convert-timestamp" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition">转换</button>
+                    <button id="clear-all" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">清空</button>
+                </div>
+                
+                <!-- 结果区域（可点击复制） -->
+                <div class="pt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">转换结果 <span class="text-xs text-gray-400">(点击复制)</span></label>
+                    <div id="result" class="w-full min-h-[60px] px-3 py-2 border border-gray-300 rounded-md bg-gray-50 whitespace-pre-wrap cursor-pointer hover:bg-gray-100 transition" title="点击复制结果"></div>
+                </div>
+            </div>
+        </div>
+    </main>
 
-		// 日期转时间戳
-		function datetimeToTimestamp(datetimeStr) {
-			if (!datetimeStr) return '';
-			// 拼接时区
-			const date = new Date(`${datetimeStr}+08:00`);
-			return {
-				seconds: Math.floor(date.getTime() / 1000),
-				milliseconds: date.getTime()
-			};
-		}
+    <script>
+        // ========== 通用工具函数 ==========
+        // Toast提示
+        function showToast(message = '复制成功', duration = 2000) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, duration);
+        }
 
-		// 事件绑定
-		document.addEventListener('DOMContentLoaded', () => {
-			const timestampInput = document.getElementById('timestamp-input');
-			const datetimeInput = document.getElementById('datetime-input');
-			const convertBtn = document.getElementById('convert-timestamp');
-			const clearBtn = document.getElementById('clear-all');
-			const result = document.getElementById('result');
+        // 复制文本到剪贴板
+        async function copyToClipboard(text) {
+            if (!text) {
+                showToast('无内容可复制', 1500);
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(text);
+                showToast();
+            } catch (err) {
+                // 降级方案：创建临时输入框
+                const input = document.createElement('textarea');
+                input.value = text;
+                document.body.appendChild(input);
+                input.select();
+                document.execCommand('copy');
+                document.body.removeChild(input);
+                showToast();
+            }
+        }
 
-			// 转换按钮
-			convertBtn.addEventListener('click', () => {
-				let output = '';
-				// 优先处理时间戳输入
-				if (timestampInput.value.trim()) {
-					const ts = timestampInput.value.trim();
-					if (!/^\d+$/.test(ts)) {
-						output = '❌ 时间戳必须为数字';
-					} else {
-						try {
-							const dt = timestampToDatetime(Number(ts));
-							output = `📅 北京时间：${dt}\n⏱️ 秒级时间戳：${Math.floor(Number(ts)/1000)}\n⏱️ 毫秒级时间戳：${Number(ts).toString().length === 10 ? Number(ts)*1000 : Number(ts)}`;
-						} catch (e) {
-							output = '❌ 无效的时间戳';
-						}
-					}
-				} 
-				// 处理日期输入
-				else if (datetimeInput.value.trim()) {
-					const dt = datetimeInput.value.trim();
-					const ts = datetimeToTimestamp(dt);
-					output = `⏱️ 秒级时间戳：${ts.seconds}\n⏱️ 毫秒级时间戳：${ts.milliseconds}`;
-				} 
-				// 无输入
-				else {
-					output = '⚠️ 请输入时间戳或日期时间';
-				}
-				result.textContent = output;
-			});
+        // ========== 时间戳转换逻辑 ==========
+        // 时间戳转北京时间
+        function timestampToDatetime(timestamp) {
+            if (timestamp.toString().length === 10) {
+                timestamp = timestamp * 1000;
+            }
+            
+            const date = new Date(timestamp);
+            return date.toLocaleString('zh-CN', {
+                timeZone: 'Asia/Shanghai',
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            }).replace(/\//g, '-');
+        }
 
-			// 清空按钮
-			clearBtn.addEventListener('click', () => {
-				timestampInput.value = '';
-				datetimeInput.value = '';
-				result.textContent = '';
-			});
-		});
-	</script>
+        // 日期转时间戳
+        function datetimeToTimestamp(datetimeStr) {
+            if (!datetimeStr) return '';
+            const date = new Date(`${datetimeStr}+08:00`);
+            return {
+                seconds: Math.floor(date.getTime() / 1000),
+                milliseconds: date.getTime()
+            };
+        }
+
+        // ========== 事件绑定 ==========
+        document.addEventListener('DOMContentLoaded', () => {
+            // 移动端菜单切换
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // 元素获取
+            const timestampInput = document.getElementById('timestamp-input');
+            const datetimeInput = document.getElementById('datetime-input');
+            const convertBtn = document.getElementById('convert-timestamp');
+            const clearBtn = document.getElementById('clear-all');
+            const result = document.getElementById('result');
+
+            // 输入框点击清空+回显提交值
+            timestampInput.addEventListener('click', () => {
+                const val = timestampInput.value.trim();
+                if (val) {
+                    result.textContent = `提交的时间戳：${val}`;
+                    timestampInput.value = '';
+                }
+            });
+            
+            datetimeInput.addEventListener('click', () => {
+                const val = datetimeInput.value.trim();
+                if (val) {
+                    result.textContent = `提交的日期时间：${val}`;
+                    datetimeInput.value = '';
+                }
+            });
+
+            // 转换按钮
+            convertBtn.addEventListener('click', () => {
+                let output = '';
+                if (timestampInput.value.trim()) {
+                    const ts = timestampInput.value.trim();
+                    if (!/^\d+$/.test(ts)) {
+                        output = '❌ 时间戳必须为数字';
+                    } else {
+                        try {
+                            const dt = timestampToDatetime(Number(ts));
+                            output = `📅 北京时间：${dt}\n⏱️ 秒级时间戳：${Math.floor(Number(ts)/1000)}\n⏱️ 毫秒级时间戳：${Number(ts).toString().length === 10 ? Number(ts)*1000 : Number(ts)}`;
+                        } catch (e) {
+                            output = '❌ 无效的时间戳';
+                        }
+                    }
+                } else if (datetimeInput.value.trim()) {
+                    const dt = datetimeInput.value.trim();
+                    const ts = datetimeToTimestamp(dt);
+                    output = `⏱️ 秒级时间戳：${ts.seconds}\n⏱️ 毫秒级时间戳：${ts.milliseconds}`;
+                } else {
+                    output = '⚠️ 请输入时间戳或日期时间';
+                }
+                result.textContent = output;
+            });
+
+            // 清空按钮
+            clearBtn.addEventListener('click', () => {
+                timestampInput.value = '';
+                datetimeInput.value = '';
+                result.textContent = '';
+            });
+
+            // 结果区域点击复制
+            result.addEventListener('click', () => {
+                copyToClipboard(result.textContent);
+            });
+        });
+    </script>
 </body>
 </html>
