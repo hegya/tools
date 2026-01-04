@@ -200,12 +200,28 @@
             const clearBtn = document.getElementById('clear-all');
             const result = document.getElementById('result');
 
-            // 输入框点击清空+回显提交值
+            // ========== 核心修复：输入联动清空 ==========
+            // 时间戳输入框输入时，清空日期输入框
+            timestampInput.addEventListener('input', () => {
+                if (timestampInput.value.trim()) {
+                    datetimeInput.value = '';
+                }
+            });
+
+            // 日期输入框选择时，清空时间戳输入框
+            datetimeInput.addEventListener('input', () => {
+                if (datetimeInput.value.trim()) {
+                    timestampInput.value = '';
+                }
+            });
+
+            // 输入框点击清空+回显提交值（联动清空另一个）
             timestampInput.addEventListener('click', () => {
                 const val = timestampInput.value.trim();
                 if (val) {
                     result.textContent = `提交的时间戳：${val}`;
                     timestampInput.value = '';
+                    datetimeInput.value = ''; // 联动清空
                 }
             });
             
@@ -214,12 +230,14 @@
                 if (val) {
                     result.textContent = `提交的日期时间：${val}`;
                     datetimeInput.value = '';
+                    timestampInput.value = ''; // 联动清空
                 }
             });
 
-            // 转换按钮
+            // 转换按钮（逻辑简化，因联动清空不会双输入）
             convertBtn.addEventListener('click', () => {
                 let output = '';
+                // 时间戳转时间
                 if (timestampInput.value.trim()) {
                     const ts = timestampInput.value.trim();
                     if (!/^\d+$/.test(ts)) {
@@ -232,12 +250,16 @@
                             output = '❌ 无效的时间戳';
                         }
                     }
-                } else if (datetimeInput.value.trim()) {
+                } 
+                // 时间转时间戳
+                else if (datetimeInput.value.trim()) {
                     const dt = datetimeInput.value.trim();
                     const ts = datetimeToTimestamp(dt);
                     output = `⏱️ 秒级时间戳：${ts.seconds}\n⏱️ 毫秒级时间戳：${ts.milliseconds}`;
-                } else {
-                    output = '⚠️ 请输入时间戳或日期时间';
+                } 
+                // 无输入
+                else {
+                    output = '⚠️ 请输入时间戳或选择日期时间';
                 }
                 result.textContent = output;
             });
