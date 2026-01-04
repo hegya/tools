@@ -169,16 +169,25 @@
         }
 
         // ========== 时间戳转换核心函数 ==========
-        // 时间戳转北京时间
+        // 时间戳转北京时间（返回格式化时间+正确的秒/毫秒级时间戳）
         function timestampToDatetime(timestamp) {
-            // 处理秒/毫秒
+            const tsNum = Number(timestamp);
+            let seconds, milliseconds;
+            
+            // 区分秒级(10位)和毫秒级(13位)时间戳
             if (timestamp.toString().length === 10) {
-                timestamp = timestamp * 1000;
+                seconds = tsNum;          // 输入是秒级，直接使用
+                milliseconds = tsNum * 1000; // 转换为毫秒级
+            } else if (timestamp.toString().length === 13) {
+                milliseconds = tsNum;     // 输入是毫秒级，直接使用
+                seconds = Math.floor(tsNum / 1000); // 转换为秒级
+            } else {
+                throw new Error('时间戳格式错误（应为10位秒级或13位毫秒级）');
             }
             
-            const date = new Date(timestamp);
+            const date = new Date(milliseconds);
             // 格式化北京时间
-            return date.toLocaleString('zh-CN', {
+            const formattedDt = date.toLocaleString('zh-CN', {
                 timeZone: 'Asia/Shanghai',
                 year: 'numeric',
                 month: '2-digit',
@@ -188,6 +197,12 @@
                 second: '2-digit',
                 hour12: false
             }).replace(/\//g, '-');
+            
+            return {
+                datetime: formattedDt,
+                seconds: seconds,
+                milliseconds: milliseconds
+            };
         }
 
         // 日期转时间戳
@@ -227,10 +242,13 @@
                     output = '❌ 时间戳必须为数字';
                 } else {
                     try {
-                        const dt = timestampToDatetime(Number(ts));
-                        output = `📅 北京时间：${dt}\n⏱️ 原始输入：${ts}\n⏱️ 秒级时间戳：${Math.floor(Number(ts)/1000)}\n⏱️ 毫秒级时间戳：${Number(ts).toString().length === 10 ? Number(ts)*1000 : Number(ts)}`;
+                        const result = timestampToDatetime(ts);
+                        output = `📅 北京时间：${result.datetime}
+⏱️ 原始输入：${ts}
+⏱️ 标准秒级时间戳：${result.seconds}
+⏱️ 标准毫秒级时间戳：${result.milliseconds}`;
                     } catch (e) {
-                        output = '❌ 无效的时间戳';
+                        output = `❌ ${e.message}`;
                     }
                 }
                 
@@ -263,7 +281,9 @@
                     output = '⚠️ 请选择日期时间';
                 } else {
                     const ts = datetimeToTimestamp(dt);
-                    output = `📅 原始选择：${dt}\n⏱️ 秒级时间戳：${ts.seconds}\n⏱️ 毫秒级时间戳：${ts.milliseconds}`;
+                    output = `📅 原始选择：${dt}
+⏱️ 秒级时间戳：${ts.seconds}
+⏱️ 毫秒级时间戳：${ts.milliseconds}`;
                 }
                 
                 dtToTsResult.textContent = output;
