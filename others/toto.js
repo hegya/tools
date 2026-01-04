@@ -9,29 +9,15 @@
 // @run-at       document-start
 // ==/UserScript==
 
+// 简化版（无动态监听）
 (function() {
     'use strict';
-    // 核心替换函数
     function replaceDomain(url) {
         return typeof url === 'string' ? url.replace(/wangmoyu\.com/g, 'toto.im') : url;
     }
-    // 替换所有图片URL
-    function replaceAllImages() {
-        const imgAttrs = ['src', 'srcset', 'data-src', 'data-original'];
-        // 处理img标签
+    document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('img').forEach(img => {
-            imgAttrs.forEach(attr => img.hasAttribute(attr) && img.setAttribute(attr, replaceDomain(img.getAttribute(attr))));
+            if (img.src) img.src = replaceDomain(img.src);
         });
-        // 处理背景图
-        document.querySelectorAll('*').forEach(elem => {
-            if (elem.style.backgroundImage) elem.style.backgroundImage = replaceDomain(elem.style.backgroundImage);
-        });
-    }
-    // 监听动态DOM
-    new MutationObserver(() => replaceAllImages()).observe(document.documentElement, {
-        childList: true, subtree: true, attributes: true
     });
-    // 初始化执行
-    replaceAllImages();
-    window.addEventListener('load', replaceAllImages);
 })();
