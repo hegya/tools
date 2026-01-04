@@ -1,38 +1,37 @@
-// Via浏览器本地脚本：替换wangmoyu.com为toto.im
+// ==UserScript==
+// @name         替换wangmoyu.com为toto.im
+// @namespace    http://tampermonkey.net/
+// @version      1.1
+// @description  适配Via浏览器，全局替换图片域名
+// @author       自定义
+// @match        *://*/*
+// @grant        none
+// @run-at       document-start
+// ==/UserScript==
+
 (function() {
     'use strict';
-    // 核心替换逻辑
+    // 核心替换函数
     function replaceDomain(url) {
         return typeof url === 'string' ? url.replace(/wangmoyu\.com/g, 'toto.im') : url;
     }
-    // 替换图片/背景图
+    // 替换所有图片URL
     function replaceAllImages() {
-        // 处理img标签（含懒加载）
-        const imgAttrs = ['src', 'srcset', 'data-src', 'data-original', 'data-lazy'];
+        const imgAttrs = ['src', 'srcset', 'data-src', 'data-original'];
+        // 处理img标签
         document.querySelectorAll('img').forEach(img => {
-            imgAttrs.forEach(attr => {
-                if (img.hasAttribute(attr)) {
-                    img.setAttribute(attr, replaceDomain(img.getAttribute(attr)));
-                }
-            });
+            imgAttrs.forEach(attr => img.hasAttribute(attr) && img.setAttribute(attr, replaceDomain(img.getAttribute(attr))));
         });
-        // 处理背景图片
+        // 处理背景图
         document.querySelectorAll('*').forEach(elem => {
-            const bg = elem.style.backgroundImage;
-            if (bg) elem.style.backgroundImage = replaceDomain(bg);
+            if (elem.style.backgroundImage) elem.style.backgroundImage = replaceDomain(elem.style.backgroundImage);
         });
     }
-    // 等待DOM加载后执行
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', replaceAllImages);
-    } else {
-        replaceAllImages();
-    }
-    // 监听动态加载的内容
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach(m => m.addedNodes.length && replaceAllImages());
+    // 监听动态DOM
+    new MutationObserver(() => replaceAllImages()).observe(document.documentElement, {
+        childList: true, subtree: true, attributes: true
     });
-    observer.observe(document.body || document.documentElement, {
-        childList: true, subtree: true
-    });
+    // 初始化执行
+    replaceAllImages();
+    window.addEventListener('load', replaceAllImages);
 })();
