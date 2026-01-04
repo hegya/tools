@@ -88,34 +88,48 @@
 
     <!-- 主内容 -->
     <main class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-24 pb-16">
-        <div class="bg-white rounded-lg shadow-md p-6">
-            <h1 class="text-2xl font-bold text-gray-800 mb-6">时间戳转换（北京时间）</h1>
+        <!-- 功能区1：时间戳 → 北京时间 -->
+        <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">时间戳 → 北京时间</h2>
             
             <div class="space-y-4">
-                <!-- 时间戳转日期 -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">时间戳（秒/毫秒）</label>
-                    <input type="text" id="timestamp-input" placeholder="例如：1735689600 或 1735689600000" 
+                    <label class="block text-sm font-medium text-gray-700 mb-1">输入时间戳（秒/毫秒）</label>
+                    <input type="text" id="ts-to-dt-input" placeholder="例如：1735689600 或 1735689600000" 
                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
                 </div>
                 
-                <!-- 日期转时间戳（精确到秒） -->
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">日期时间（精确到秒）</label>
-                    <input type="datetime-local" id="datetime-input" step="1" 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
-                </div>
-                
-                <!-- 按钮区域 -->
                 <div class="flex space-x-3 pt-2">
-                    <button id="convert-timestamp" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition">转换</button>
-                    <button id="clear-all" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">清空</button>
+                    <button id="ts-to-dt-convert" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition">转换</button>
+                    <button id="ts-to-dt-clear" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">清空</button>
                 </div>
                 
-                <!-- 结果区域（可点击复制） -->
                 <div class="pt-4">
                     <label class="block text-sm font-medium text-gray-700 mb-1">转换结果 <span class="text-xs text-gray-400">(点击复制)</span></label>
-                    <div id="result" class="w-full min-h-[60px] px-3 py-2 border border-gray-300 rounded-md bg-gray-50 whitespace-pre-wrap cursor-pointer hover:bg-gray-100 transition" title="点击复制结果"></div>
+                    <div id="ts-to-dt-result" class="w-full min-h-[60px] px-3 py-2 border border-gray-300 rounded-md bg-gray-50 whitespace-pre-wrap cursor-pointer hover:bg-gray-100 transition" title="点击复制结果"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能区2：北京时间 → 时间戳 -->
+        <div class="bg-white rounded-lg shadow-md p-6">
+            <h2 class="text-xl font-bold text-gray-800 mb-6">北京时间 → 时间戳</h2>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">选择日期时间（精确到秒）</label>
+                    <input type="datetime-local" id="dt-to-ts-input" step="1" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary">
+                </div>
+                
+                <div class="flex space-x-3 pt-2">
+                    <button id="dt-to-ts-convert" class="px-4 py-2 bg-primary text-white rounded-md hover:bg-primary/90 transition">转换</button>
+                    <button id="dt-to-ts-clear" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition">清空</button>
+                </div>
+                
+                <div class="pt-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">转换结果 <span class="text-xs text-gray-400">(点击复制)</span></label>
+                    <div id="dt-to-ts-result" class="w-full min-h-[60px] px-3 py-2 border border-gray-300 rounded-md bg-gray-50 whitespace-pre-wrap cursor-pointer hover:bg-gray-100 transition" title="点击复制结果"></div>
                 </div>
             </div>
         </div>
@@ -154,14 +168,16 @@
             }
         }
 
-        // ========== 时间戳转换逻辑 ==========
+        // ========== 时间戳转换核心函数 ==========
         // 时间戳转北京时间
         function timestampToDatetime(timestamp) {
+            // 处理秒/毫秒
             if (timestamp.toString().length === 10) {
                 timestamp = timestamp * 1000;
             }
             
             const date = new Date(timestamp);
+            // 格式化北京时间
             return date.toLocaleString('zh-CN', {
                 timeZone: 'Asia/Shanghai',
                 year: 'numeric',
@@ -176,7 +192,8 @@
 
         // 日期转时间戳
         function datetimeToTimestamp(datetimeStr) {
-            if (!datetimeStr) return '';
+            if (!datetimeStr) return { seconds: '', milliseconds: '' };
+            // 拼接时区
             const date = new Date(`${datetimeStr}+08:00`);
             return {
                 seconds: Math.floor(date.getTime() / 1000),
@@ -186,94 +203,81 @@
 
         // ========== 事件绑定 ==========
         document.addEventListener('DOMContentLoaded', () => {
-            // 移动端菜单切换
+            // 1. 移动端菜单切换
             const mobileMenuBtn = document.getElementById('mobile-menu-btn');
             const mobileMenu = document.getElementById('mobile-menu');
             mobileMenuBtn.addEventListener('click', () => {
                 mobileMenu.classList.toggle('hidden');
             });
 
-            // 元素获取
-            const timestampInput = document.getElementById('timestamp-input');
-            const datetimeInput = document.getElementById('datetime-input');
-            const convertBtn = document.getElementById('convert-timestamp');
-            const clearBtn = document.getElementById('clear-all');
-            const result = document.getElementById('result');
+            // ========== 功能区1：时间戳 → 北京时间 ==========
+            const tsToDtInput = document.getElementById('ts-to-dt-input');
+            const tsToDtConvert = document.getElementById('ts-to-dt-convert');
+            const tsToDtClear = document.getElementById('ts-to-dt-clear');
+            const tsToDtResult = document.getElementById('ts-to-dt-result');
 
-            // ========== 核心修复：输入联动清空 ==========
-            // 时间戳输入框输入时，清空日期输入框
-            timestampInput.addEventListener('input', () => {
-                if (timestampInput.value.trim()) {
-                    datetimeInput.value = '';
-                }
-            });
-
-            // 日期输入框选择时，清空时间戳输入框
-            datetimeInput.addEventListener('input', () => {
-                if (datetimeInput.value.trim()) {
-                    timestampInput.value = '';
-                }
-            });
-
-            // 输入框点击清空+回显提交值（联动清空另一个）
-            timestampInput.addEventListener('click', () => {
-                const val = timestampInput.value.trim();
-                if (val) {
-                    result.textContent = `提交的时间戳：${val}`;
-                    timestampInput.value = '';
-                    datetimeInput.value = ''; // 联动清空
-                }
-            });
-            
-            datetimeInput.addEventListener('click', () => {
-                const val = datetimeInput.value.trim();
-                if (val) {
-                    result.textContent = `提交的日期时间：${val}`;
-                    datetimeInput.value = '';
-                    timestampInput.value = ''; // 联动清空
-                }
-            });
-
-            // 转换按钮（逻辑简化，因联动清空不会双输入）
-            convertBtn.addEventListener('click', () => {
+            // 转换按钮
+            tsToDtConvert.addEventListener('click', () => {
+                const ts = tsToDtInput.value.trim();
                 let output = '';
-                // 时间戳转时间
-                if (timestampInput.value.trim()) {
-                    const ts = timestampInput.value.trim();
-                    if (!/^\d+$/.test(ts)) {
-                        output = '❌ 时间戳必须为数字';
-                    } else {
-                        try {
-                            const dt = timestampToDatetime(Number(ts));
-                            output = `📅 北京时间：${dt}\n⏱️ 秒级时间戳：${Math.floor(Number(ts)/1000)}\n⏱️ 毫秒级时间戳：${Number(ts).toString().length === 10 ? Number(ts)*1000 : Number(ts)}`;
-                        } catch (e) {
-                            output = '❌ 无效的时间戳';
-                        }
+                
+                if (!ts) {
+                    output = '⚠️ 请输入时间戳';
+                } else if (!/^\d+$/.test(ts)) {
+                    output = '❌ 时间戳必须为数字';
+                } else {
+                    try {
+                        const dt = timestampToDatetime(Number(ts));
+                        output = `📅 北京时间：${dt}\n⏱️ 原始输入：${ts}\n⏱️ 秒级时间戳：${Math.floor(Number(ts)/1000)}\n⏱️ 毫秒级时间戳：${Number(ts).toString().length === 10 ? Number(ts)*1000 : Number(ts)}`;
+                    } catch (e) {
+                        output = '❌ 无效的时间戳';
                     }
-                } 
-                // 时间转时间戳
-                else if (datetimeInput.value.trim()) {
-                    const dt = datetimeInput.value.trim();
-                    const ts = datetimeToTimestamp(dt);
-                    output = `⏱️ 秒级时间戳：${ts.seconds}\n⏱️ 毫秒级时间戳：${ts.milliseconds}`;
-                } 
-                // 无输入
-                else {
-                    output = '⚠️ 请输入时间戳或选择日期时间';
                 }
-                result.textContent = output;
+                
+                tsToDtResult.textContent = output;
             });
 
             // 清空按钮
-            clearBtn.addEventListener('click', () => {
-                timestampInput.value = '';
-                datetimeInput.value = '';
-                result.textContent = '';
+            tsToDtClear.addEventListener('click', () => {
+                tsToDtInput.value = '';
+                tsToDtResult.textContent = '';
             });
 
-            // 结果区域点击复制
-            result.addEventListener('click', () => {
-                copyToClipboard(result.textContent);
+            // 复制结果
+            tsToDtResult.addEventListener('click', () => {
+                copyToClipboard(tsToDtResult.textContent);
+            });
+
+            // ========== 功能区2：北京时间 → 时间戳 ==========
+            const dtToTsInput = document.getElementById('dt-to-ts-input');
+            const dtToTsConvert = document.getElementById('dt-to-ts-convert');
+            const dtToTsClear = document.getElementById('dt-to-ts-clear');
+            const dtToTsResult = document.getElementById('dt-to-ts-result');
+
+            // 转换按钮
+            dtToTsConvert.addEventListener('click', () => {
+                const dt = dtToTsInput.value.trim();
+                let output = '';
+                
+                if (!dt) {
+                    output = '⚠️ 请选择日期时间';
+                } else {
+                    const ts = datetimeToTimestamp(dt);
+                    output = `📅 原始选择：${dt}\n⏱️ 秒级时间戳：${ts.seconds}\n⏱️ 毫秒级时间戳：${ts.milliseconds}`;
+                }
+                
+                dtToTsResult.textContent = output;
+            });
+
+            // 清空按钮
+            dtToTsClear.addEventListener('click', () => {
+                dtToTsInput.value = '';
+                dtToTsResult.textContent = '';
+            });
+
+            // 复制结果
+            dtToTsResult.addEventListener('click', () => {
+                copyToClipboard(dtToTsResult.textContent);
             });
         });
     </script>
