@@ -222,6 +222,20 @@
             };
         }
 
+        // ========== 工具函数 ==========
+        // 防抖函数
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
         // ========== 事件绑定 ==========
         document.addEventListener('DOMContentLoaded', () => {
             // 1. 移动端菜单切换
@@ -231,14 +245,19 @@
                 mobileMenu.classList.toggle('hidden');
             });
 
+            // 2. 自动设置当前时间
+            const now = new Date();
+            const currentDateTime = now.toISOString().slice(0, 19);
+            document.getElementById('dt-to-ts-input').value = currentDateTime;
+
             // ========== 功能区1：时间戳 → 北京时间 ==========
             const tsToDtInput = document.getElementById('ts-to-dt-input');
             const tsToDtConvert = document.getElementById('ts-to-dt-convert');
             const tsToDtClear = document.getElementById('ts-to-dt-clear');
             const tsToDtResult = document.getElementById('ts-to-dt-result');
 
-            // 转换按钮
-            tsToDtConvert.addEventListener('click', () => {
+            // 转换函数
+            const convertTimestampToDatetime = () => {
                 const ts = tsToDtInput.value.trim();
                 let output = '';
                 
@@ -249,16 +268,23 @@
                 } else {
                     try {
                         const result = timestampToDatetime(ts);
-                        output = `📅 北京时间：${result.datetime}
-⏱️ 原始输入：${ts}
-⏱️ 标准秒级时间戳：${result.seconds}
-⏱️ 标准毫秒级时间戳：${result.milliseconds}`;
+                        output = `📅 北京时间：${result.datetime}\n⏱️ 原始输入：${ts}\n⏱️ 标准秒级时间戳：${result.seconds}\n⏱️ 标准毫秒级时间戳：${result.milliseconds}`;
                     } catch (e) {
                         output = `❌ ${e.message}`;
                     }
                 }
                 
                 tsToDtResult.textContent = output;
+            };
+
+            // 转换按钮
+            tsToDtConvert.addEventListener('click', convertTimestampToDatetime);
+
+            // 输入框回车触发转换
+            tsToDtInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    convertTimestampToDatetime();
+                }
             });
 
             // 清空按钮
@@ -278,8 +304,8 @@
             const dtToTsClear = document.getElementById('dt-to-ts-clear');
             const dtToTsResult = document.getElementById('dt-to-ts-result');
 
-            // 转换按钮
-            dtToTsConvert.addEventListener('click', () => {
+            // 转换函数
+            const convertDatetimeToTimestamp = () => {
                 const dt = dtToTsInput.value.trim();
                 let output = '';
                 
@@ -287,13 +313,17 @@
                     output = '⚠️ 请选择日期时间';
                 } else {
                     const ts = datetimeToTimestamp(dt);
-                    output = `📅 原始选择：${dt}
-⏱️ 秒级时间戳：${ts.seconds}
-⏱️ 毫秒级时间戳：${ts.milliseconds}`;
+                    output = `📅 原始选择：${dt}\n⏱️ 秒级时间戳：${ts.seconds}\n⏱️ 毫秒级时间戳：${ts.milliseconds}`;
                 }
                 
                 dtToTsResult.textContent = output;
-            });
+            };
+
+            // 转换按钮
+            dtToTsConvert.addEventListener('click', convertDatetimeToTimestamp);
+
+            // 输入框变化触发转换（带防抖）
+            dtToTsInput.addEventListener('change', debounce(convertDatetimeToTimestamp, 300));
 
             // 清空按钮
             dtToTsClear.addEventListener('click', () => {
@@ -305,6 +335,9 @@
             dtToTsResult.addEventListener('click', () => {
                 copyToClipboard(dtToTsResult.textContent);
             });
+
+            // 3. 初始化：自动转换当前时间为时间戳
+            convertDatetimeToTimestamp();
         });
     </script>
 </body>
