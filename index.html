@@ -247,11 +247,14 @@
 
             // 2. 自动设置当前时间（北京时间）
             const now = new Date();
-            // 创建一个新的Date对象，确保使用本地时间
-            const localDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 
-                                      now.getHours(), now.getMinutes(), now.getSeconds());
-            // 转换为ISO格式字符串，但保留本地时间
-            const currentDateTime = localDate.toISOString().slice(0, 19);
+            // 手动构建ISO格式字符串，确保使用本地时间
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            const currentDateTime = `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
             document.getElementById('dt-to-ts-input').value = currentDateTime;
 
             // ========== 功能区1：时间戳 → 北京时间 ==========
